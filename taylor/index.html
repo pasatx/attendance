@@ -1264,7 +1264,7 @@ function buildCards(results){
 }
 function mkCard({info,type}){
   const sn=resolveName(info,type);
-  const displayName=type==='early'?(sn||info.name||'School'):(info.name||sn||'School');
+  const displayName=type==='early'?(sn?sn+' Early Education':info.name||'School'):(info.name||sn||'School');
   const tc=type==='early'?'ee':type==='elem'?'e':type==='mid'?'m':'h';
   const canClick=sn&&dByName[sn];
   const typeLabel=type==='early'?'Early Education Zone':type==='elem'?'Elementary School Zone':type==='mid'?'Middle School Zone':'High School Zone';
