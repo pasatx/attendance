@@ -1256,14 +1256,14 @@ function buildCards(results){
 }
 function mkCard({info,type}){
   const sn=resolveName(info,type);
-  const displayName=info.name||sn||'School';
+  const displayName=type==='early'?(sn||info.name||'School'):(info.name||sn||'School');
   const tc=type==='early'?'ee':type==='elem'?'e':type==='mid'?'m':'h';
   const canClick=sn&&dByName[sn];
   const typeLabel=type==='early'?'Early Education Zone':type==='elem'?'Elementary School Zone':type==='mid'?'Middle School Zone':'High School Zone';
   const rows=[
     ['Zone',          info.short||displayName],
     ['Grade Group',   info.grp],
-    ['Grades Served', info.grades],
+    ['Grades Served', type==='early'?'EE - KG':info.grades],
     ['Address',       info.addr],
     ['Phone Number',  info.phone?`<a href="tel:${info.phone}" onclick="event.stopPropagation()">${info.phone}</a>`:''],
     ['Website',       info.web?`<a href="${info.web}" target="_blank" onclick="event.stopPropagation()">View</a>`:''],
