@@ -427,15 +427,25 @@ html,body{
 .map-hint.hidden{opacity:0;pointer-events:none}
 
 /* ── MAP LEGEND ── */
+#legendWrap{position:absolute;bottom:28px;right:10px;z-index:500;display:flex;flex-direction:column;align-items:flex-end;gap:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
 #mapLegend{
-  position:absolute;bottom:28px;right:10px;
+  display:none;
   background:rgba(255,255,255,.97);
   border:1px solid rgba(0,0,0,.09);
   border-radius:14px;padding:18px 22px 16px;
   box-shadow:0 4px 20px rgba(0,0,0,.16);
-  z-index:500;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
   min-width:230px;
 }
+#mapLegend.open{display:block}
+#legendBtn{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.97);border:1px solid rgba(0,0,0,.09);
+  border-radius:20px;padding:7px 14px;
+  box-shadow:0 2px 10px rgba(0,0,0,.14);
+  font-size:13px;font-weight:600;color:#374151;cursor:pointer;
+  font-family:inherit;
+}
+#legendBtn:hover{background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.2)}
 .leg-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9CA3AF;margin-bottom:12px}
 .leg-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;color:#1F2937;font-size:15px;font-weight:500}
 .leg-row:last-child{margin-bottom:0}
@@ -564,7 +574,7 @@ html,body{
 
   .map-wrap{flex:1;min-height:180px}
 
-  #mapLegend{display:none}
+  #legendWrap{display:none}
 
   .map-hint{bottom:10px;font-size:11px;padding:6px 12px}
 
@@ -719,17 +729,23 @@ html,body{
       Click anywhere on the map to find schools at that location
     </div>
     <div id="clickHint"></div>
-    <div id="mapLegend">
-      <div class="leg-title">Legend</div>
-      <div class="leg-row"><div class="leg-dot leg-dot-e">E</div><span>Elementary School</span></div>
-      <div class="leg-row"><div class="leg-dot leg-dot-m">M</div><span>Middle School</span></div>
-      <div class="leg-row"><div class="leg-dot leg-dot-h">H</div><span>High School</span></div>
-      <hr class="leg-divider">
-      <div class="leg-row"><div class="leg-swatch leg-sw-e"></div><span>Elementary Zone</span></div>
-      <div class="leg-row"><div class="leg-swatch leg-sw-m"></div><span>Middle School Zone</span></div>
-      <div class="leg-row"><div class="leg-swatch leg-sw-h"></div><span>High School Zone</span></div>
-      <hr class="leg-divider">
-      <div class="leg-row"><div class="leg-line"></div><span>District Boundary</span></div>
+    <div id="legendWrap">
+      <div id="mapLegend">
+        <div class="leg-title">Legend</div>
+        <div class="leg-row"><div class="leg-dot leg-dot-e">E</div><span>Elementary School</span></div>
+        <div class="leg-row"><div class="leg-dot leg-dot-m">M</div><span>Middle School</span></div>
+        <div class="leg-row"><div class="leg-dot leg-dot-h">H</div><span>High School</span></div>
+        <hr class="leg-divider">
+        <div class="leg-row"><div class="leg-swatch leg-sw-e"></div><span>Elementary Zone</span></div>
+        <div class="leg-row"><div class="leg-swatch leg-sw-m"></div><span>Middle School Zone</span></div>
+        <div class="leg-row"><div class="leg-swatch leg-sw-h"></div><span>High School Zone</span></div>
+        <hr class="leg-divider">
+        <div class="leg-row"><div class="leg-line"></div><span>District Boundary</span></div>
+      </div>
+      <button id="legendBtn" onclick="document.getElementById('mapLegend').classList.toggle('open')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="3" rx="1" fill="#6B7280"/><rect x="1" y="5.5" width="12" height="3" rx="1" fill="#6B7280"/><rect x="1" y="10" width="12" height="3" rx="1" fill="#6B7280"/></svg>
+        Legend
+      </button>
     </div>
   </div>
 </div>
