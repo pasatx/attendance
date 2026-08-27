@@ -1292,7 +1292,7 @@ function mkCard({info,type}){
   const rows=[
     ['Zone',          info.short||displayName],
     ['Grade Group',   info.grp],
-    ['Grades Served', type==='early'?'EE - KG':type==='high12'?'12th':/12/.test(info.grades)?info.grades:'9th-11th'],
+    ['Grades Served', type==='early'?'EE - KG':type==='elem'?'EE – 5th':type==='mid'?'6th – 8th':type==='high12'?'12th':/12/.test(info.grades)?info.grades:'9th–11th'],
     ['Address',       info.addr],
     ['Phone Number',  info.phone?`<a href="tel:${info.phone}" onclick="event.stopPropagation()">${info.phone}</a>`:''],
     ['Website',       info.web?`<a href="${info.web}" target="_blank" onclick="event.stopPropagation()">View</a>`:''],
