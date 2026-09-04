@@ -862,7 +862,7 @@ const TYPE={
 /* ─── MAP ─── */
 const map=L.map('map',{zoomControl:true}).setView(CONFIG.mapCenter,CONFIG.mapZoom);
 const BM={
-  street:    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri',maxZoom:20,maxNativeZoom:16}),
+  street:    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri',maxZoom:20,maxNativeZoom:19}),
   satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri',maxZoom:20}),
   topo:      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri',maxZoom:20})
 };
@@ -1094,7 +1094,7 @@ async function fetchAC(q){
 }
 function showDrop(feats){
   const drop=document.getElementById('acDrop');acIdx=-1;
-  if(!feats.length){drop.innerHTML='<div class="ac-none">No addresses found</div>';drop.classList.add('open');return}
+  if(!feats.length){hideDrop();return}
   drop.innerHTML=feats.map((f,i)=>`<div class="ac-row" onclick="pickAC(acList[${i}])"><svg width="11" height="13" viewBox="0 0 11 13" fill="none"><path d="M5.5 0C3.01 0 1 2 1 4.5 1 7.88 5.5 13 5.5 13s4.5-5.12 4.5-8.5C10 2 7.99 0 5.5 0zm0 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" fill="#9CA3AF"/></svg>${f.attributes[CONFIG.addressField]}</div>`).join('');
   drop.classList.add('open');
 }
