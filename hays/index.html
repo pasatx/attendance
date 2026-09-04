@@ -862,7 +862,7 @@ const TYPE={
 /* ─── MAP ─── */
 const map=L.map('map',{zoomControl:true}).setView(CONFIG.mapCenter,CONFIG.mapZoom);
 const BM={
-  street:    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CartoDB',subdomains:'abcd',maxZoom:20}),
+  street:    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri',maxZoom:20,maxNativeZoom:16}),
   satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri',maxZoom:20}),
   topo:      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri',maxZoom:20})
 };
@@ -1210,13 +1210,14 @@ window.doSearch=async function(){
     }catch{}
     if(!lat){
       try{
-        const q=/tx|texas/i.test(input)?input:input+', '+CONFIG.districtCity;
-        const gr=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=us`,{headers:{'Accept-Language':'en'}});
+        const q=/tx|texas/i.test(input)?input:input+', '+CONFIG.districtCity+', TX';
+        const gr=await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?SingleLine=${encodeURIComponent(q)}&maxLocations=1&outFields=*&f=json`);
         const gd=await gr.json();
-        if(!gd.length){setSt('Address not found. Try selecting from suggestions.','err');document.getElementById('srchBtn').disabled=false;return}
-        lat=parseFloat(gd[0].lat);lng=parseFloat(gd[0].lon);
+        const c=gd.candidates?.[0];
+        if(!c||c.score<80){setSt('Address not found. Try selecting from suggestions.','err');document.getElementById('srchBtn').disabled=false;return}
+        lng=c.location.x;lat=c.location.y;
         ({x,y}=ll2m(lat,lng));
-        dispAddr=gd[0].display_name.split(',').slice(0,3).join(', ');
+        dispAddr=c.address;
       }catch{setSt('Could not locate address.','err');document.getElementById('srchBtn').disabled=false;return}
     }
   }
