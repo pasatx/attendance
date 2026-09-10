@@ -452,14 +452,29 @@ html,body{
 
 /* ── MAP LEGEND ── */
 #mapLegend{
-  position:absolute;bottom:28px;right:10px;
+  position:absolute;bottom:78px;right:10px;
   background:rgba(255,255,255,.97);
   border:1px solid rgba(0,0,0,.09);
   border-radius:14px;padding:18px 22px 16px;
   box-shadow:0 4px 20px rgba(0,0,0,.16);
   z-index:500;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
   min-width:230px;
+  display:none;
 }
+#mapLegend.open{display:block}
+.leg-close{position:absolute;top:12px;right:12px;background:none;border:0;color:#9CA3AF;font-size:18px;line-height:1;cursor:pointer;padding:4px}
+.leg-close:hover{color:#1F2937}
+.legend-toggle-btn{
+  position:absolute;bottom:28px;right:10px;
+  width:40px;height:40px;border-radius:50%;
+  background:#fff;border:1px solid rgba(0,0,0,.09);
+  box-shadow:0 4px 20px rgba(0,0,0,.16);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:500;color:var(--navy);
+  transition:background .15s,color .15s;
+}
+.legend-toggle-btn:hover{background:var(--surface);color:var(--navy-md)}
+.legend-toggle-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 .leg-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9CA3AF;margin-bottom:12px}
 .leg-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;color:#1F2937;font-size:15px;font-weight:500}
 .leg-row:last-child{margin-bottom:0}
@@ -591,6 +606,7 @@ html,body{
   .map-wrap{flex:1;min-height:180px}
 
   #mapLegend{display:none}
+  .legend-toggle-btn{display:none}
 
   .map-hint{bottom:10px;font-size:11px;padding:6px 12px}
 
@@ -751,6 +767,7 @@ html,body{
     </div>
     <div id="clickHint"></div>
     <div id="mapLegend">
+      <button class="leg-close" onclick="toggleLegend()" aria-label="Close legend">&times;</button>
       <div class="leg-title">Legend</div>
       <div class="leg-row"><div class="leg-dot leg-dot-e">E</div><span>Elementary School</span></div>
       <div class="leg-row"><div class="leg-dot leg-dot-m">M</div><span>Middle School</span></div>
@@ -762,6 +779,16 @@ html,body{
       <hr class="leg-divider">
       <div class="leg-row"><div class="leg-line"></div><span>District Boundary</span></div>
     </div>
+    <button class="legend-toggle-btn" id="legendBtn" onclick="toggleLegend()" aria-label="Toggle legend" title="Legend">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="2" y="2" width="4" height="4" rx="1" fill="currentColor"/>
+        <rect x="2" y="7" width="4" height="4" rx="1" fill="currentColor"/>
+        <rect x="2" y="12" width="4" height="4" rx="1" fill="currentColor"/>
+        <line x1="9" y1="4" x2="16" y2="4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="9" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="9" y1="14" x2="16" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
   </div>
 </div>
 
@@ -1077,6 +1104,11 @@ window.toggleCtrl=function(){
   document.getElementById('ctrlToggle').classList.toggle('open');
 };
 
+window.toggleLegend=function(){
+  document.getElementById('mapLegend').classList.toggle('open');
+  document.getElementById('legendBtn').classList.toggle('active');
+};
+
 /* ─── LAYER TOGGLES ─── */
 window.togSchools=function(type){
   schoolsOn[type]=!schoolsOn[type];
@@ -1122,7 +1154,7 @@ async function fetchAC(q){
 }
 function showDrop(feats){
   const drop=document.getElementById('acDrop');acIdx=-1;
-  if(!feats.length){drop.innerHTML='<div class="ac-none">No addresses found</div>';drop.classList.add('open');return}
+  if(!feats.length){hideDrop();return}
   drop.innerHTML=feats.map((f,i)=>`<div class="ac-row" onclick="pickAC(acList[${i}])"><svg width="11" height="13" viewBox="0 0 11 13" fill="none"><path d="M5.5 0C3.01 0 1 2 1 4.5 1 7.88 5.5 13 5.5 13s4.5-5.12 4.5-8.5C10 2 7.99 0 5.5 0zm0 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" fill="#9CA3AF"/></svg>${f.attributes[CONFIG.addressField]}</div>`).join('');
   drop.classList.add('open');
 }
@@ -1226,13 +1258,14 @@ window.doSearch=async function(){
     }catch{}
     if(!lat){
       try{
-        const q=/tx|texas/i.test(input)?input:input+', '+CONFIG.districtCity;
-        const gr=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=us`,{headers:{'Accept-Language':'en'}});
+        const q=/tx|texas/i.test(input)?input:input+', '+CONFIG.districtCity+', TX';
+        const gr=await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?SingleLine=${encodeURIComponent(q)}&maxLocations=1&outFields=*&f=json`);
         const gd=await gr.json();
-        if(!gd.length){setSt('Address not found. Try selecting from suggestions.','err');document.getElementById('srchBtn').disabled=false;return}
-        lat=parseFloat(gd[0].lat);lng=parseFloat(gd[0].lon);
+        const c=gd.candidates?.[0];
+        if(!c||c.score<80){setSt('Address not found. Try selecting from suggestions.','err');document.getElementById('srchBtn').disabled=false;return}
+        lng=c.location.x;lat=c.location.y;
         ({x,y}=ll2m(lat,lng));
-        dispAddr=gd[0].display_name.split(',').slice(0,3).join(', ');
+        dispAddr=c.address;
       }catch{setSt('Could not locate address.','err');document.getElementById('srchBtn').disabled=false;return}
     }
   }
