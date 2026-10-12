@@ -1204,12 +1204,14 @@ async function interpStreet(raw){
     const r=await fetch(`${L0}/query?where=${w}&outFields=${CONFIG.addressField}&returnGeometry=true&outSR=102100&resultRecordCount=1000&f=json`);
     const d=await r.json();
     const feats=d.features||[];
-    const re=/^(\d+)\s*(NE|NW|SE|SW|N|S|E|W)?\b\.?\s*/i;
+    const re=/^(\d+)\s*(NE|NW|SE|SW|N|S|E|W)?\b\.?\s*([A-Za-z]{2,})/i;
     const parsed=[];
     feats.forEach(f=>{
       const s=f.attributes[CONFIG.addressField]||'';
       const m=s.match(re);
-      if(m)parsed.push({num:parseInt(m[1],10),dir:m[2]?m[2].toUpperCase():null,x:f.geometry.x,y:f.geometry.y});
+      // require the candidate's own leading street-name word to match ours exactly,
+      // not just contain it anywhere (prevents e.g. "North Ave" matching "Northgate Dr")
+      if(m&&m[3]&&m[3].toUpperCase()===term)parsed.push({num:parseInt(m[1],10),dir:m[2]?m[2].toUpperCase():null,x:f.geometry.x,y:f.geometry.y});
     });
     if(!parsed.length)return null;
     const pick=list=>{
@@ -1225,8 +1227,17 @@ async function interpStreet(raw){
     if(below&&above&&below!==above){
       const gap=Math.abs(above.num-below.num);
       if(gap<=400){
-        const frac=(num-below.num)/(above.num-below.num);
-        return{x:below.x+(above.x-below.x)*frac,y:below.y+(above.y-below.y)*frac,dispAddr:raw};
+        // only trust the interpolation if both bracketing addresses agree on
+        // every zone — if they don't, a real boundary likely runs between them
+        // and a straight-line guess could land on the wrong side
+        const[bEE,bEA,bMA,bHA]=await Promise.all([L_EE?qBdry(L_EE,below.x,below.y):Promise.resolve(null),qBdry(L2,below.x,below.y),qBdry(L3,below.x,below.y),qBdry(L4,below.x,below.y)]);
+        const[aEE,aEA,aMA,aHA]=await Promise.all([L_EE?qBdry(L_EE,above.x,above.y):Promise.resolve(null),qBdry(L2,above.x,above.y),qBdry(L3,above.x,above.y),qBdry(L4,above.x,above.y)]);
+        const zoneKey=attrs=>attrs?(attrs[CONFIG.zoneFields.elem]||'')+'|'+(attrs[CONFIG.zoneFields.mid]||'')+'|'+(attrs[CONFIG.zoneFields.high]||''):'';
+        if(zoneKey(bEA)===zoneKey(aEA)&&zoneKey(bMA)===zoneKey(aMA)&&zoneKey(bHA)===zoneKey(aHA)){
+          const frac=(num-below.num)/(above.num-below.num);
+          return{x:below.x+(above.x-below.x)*frac,y:below.y+(above.y-below.y)*frac,dispAddr:raw};
+        }
+        return{ambiguous:true};
       }
     }
     const nearest=[below,above].filter(Boolean).sort((a,b)=>Math.abs(a.num-num)-Math.abs(b.num-num))[0];
@@ -1254,11 +1265,17 @@ window.doSearch=async function(){
       const d=await r.json();
       if(d.features?.length){x=d.features[0].geometry.x;y=d.features[0].geometry.y;({lat,lng}=m2ll(x,y));dispAddr=d.features[0].attributes[CONFIG.addressField]}
     }catch{}
+    let ambiguous=false;
     if(!lat){
       try{
         const guess=await interpStreet(input);
-        if(guess){x=guess.x;y=guess.y;({lat,lng}=m2ll(x,y));dispAddr=guess.dispAddr}
+        if(guess?.ambiguous){ambiguous=true}
+        else if(guess){x=guess.x;y=guess.y;({lat,lng}=m2ll(x,y));dispAddr=guess.dispAddr}
       }catch{}
+    }
+    if(ambiguous){
+      setSt(`This address is near a zone boundary and can't be automatically verified. Please contact ${CONFIG.districtShort} directly to confirm your schools.`,'err');
+      document.getElementById('srchBtn').disabled=false;return;
     }
     if(!lat){
       try{
